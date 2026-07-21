@@ -1,0 +1,45 @@
+# =============================================================
+# .gitignore — Quantum ML Success Prediction
+# =============================================================
+
+# --- Virtual Environment ---
+venv/
+env/
+.venv/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Saved Models (large files) ---
+outputs/models/*.joblib
+
+# --- Temporary files ---
+*.tmp
+*.bak
+extract_doc.py
+extract_doc.ps1
+proposal_text.txt
+~$*.docx

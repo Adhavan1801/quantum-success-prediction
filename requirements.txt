@@ -1,0 +1,33 @@
+# =============================================================
+# Quantum ML Success Prediction — Python Dependencies
+# =============================================================
+# Install with: pip install -r requirements.txt
+# =============================================================
+
+# --- Quantum Computing ---
+qiskit==1.4.2
+qiskit-aer==0.17.0
+
+# --- Machine Learning ---
+scikit-learn>=1.5
+
+# --- Data Handling ---
+pandas>=2.0
+numpy>=1.24
+
+# --- Visualization ---
+matplotlib>=3.7
+seaborn>=0.13
+
+# --- Model Persistence ---
+joblib>=1.3
+
+# --- Jupyter Notebook ---
+jupyter
+ipykernel
+
+# --- Progress Bars ---
+tqdm
+
+# --- Testing ---
+pytest
