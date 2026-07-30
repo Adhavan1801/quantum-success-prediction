@@ -43,3 +43,4 @@ extract_doc.py
 extract_doc.ps1
 proposal_text.txt
 ~$*.docx
+*.pdf
