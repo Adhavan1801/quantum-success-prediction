@@ -39,6 +39,7 @@ outputs/models/*.joblib
 # --- Temporary files ---
 *.tmp
 *.bak
+temp.ipynb
 extract_doc.py
 extract_doc.ps1
 proposal_text.txt
