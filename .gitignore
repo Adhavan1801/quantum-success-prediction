@@ -47,5 +47,8 @@ proposal_text.txt
 *.pdf
 
 
+# --- Backup (staged restoration) ---
+_backup/
+
 #--- documents ---
 *.docx
