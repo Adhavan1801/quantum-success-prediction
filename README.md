@@ -19,17 +19,21 @@ This project combines quantum computing simulation with classical machine learni
 ## Project Structure
 
 ```
+├── data/
+│   └── results.csv                         # Simulation results
 ├── notebooks/
-│   ├── 01_circuit_building.ipynb         # Build & visualize quantum circuits
-│   └── 06_circuit_visualization.ipynb    # Circuit diagrams & analysis
-│
+│   ├── 01_circuit_building.ipynb            # Build & visualize quantum circuits
+│   ├── 02_noise_simulation.ipynb            # Simulate noise and export results
+│   ├── 03_eda_feature_engineering.ipynb     # Explore data and engineer features
+│   └── 06_circuit_visualization.ipynb       # Visualize circuits from simulation results
 ├── src/
-│   └── circuits.py              # DJ, BV, Simon's oracle & circuit builders
-│
+│   ├── circuits.py                          # DJ, BV, Simon's circuit builders
+│   ├── feature_engineering.py               # Dataset and ML feature utilities
+│   ├── noise_models.py                      # Quantum noise model definitions
+│   └── simulation.py                        # Circuit execution and parameter sweeps
 ├── tests/
-│   └── test_circuits.py         # Unit tests for circuit builders
-│
-└── requirements.txt             # Python dependencies
+│   └── test_circuits.py                     # Unit tests for circuit builders
+└── requirements.txt                         # Python dependencies
 ```
 
 ## Algorithms Studied
@@ -59,7 +63,7 @@ pip install -r requirements.txt
 ```bash
 jupyter notebook
 ```
-Open `01_circuit_building.ipynb` to explore the quantum circuits.
+Open `notebooks/01_circuit_building.ipynb` to explore the quantum circuits.
 
 ## Tools & Technologies
 
