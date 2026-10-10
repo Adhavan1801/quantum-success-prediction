@@ -51,16 +51,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const resProbRaw = document.getElementById("res-prob-raw");
   const resFidelityBadge = document.getElementById("res-fidelity-badge");
   const resFidelityDesc = document.getElementById("res-fidelity-desc");
-  const resDecoherence = document.getElementById("res-decoherence-loss");
-  const resDensity = document.getElementById("res-depth-density");
-  const resEntanglement = document.getElementById("res-entanglement-ratio");
-
   const resConfidenceScore = document.getElementById("res-confidence-score");
   const resConfidenceBar = document.getElementById("res-confidence-bar");
   const resConfidencePill = document.getElementById("res-confidence-pill");
-  const resCiRange = document.getElementById("res-ci-range");
-  const resCiMargin = document.getElementById("res-ci-margin");
-  const resStdError = document.getElementById("res-std-error");
   const treeHistogram = document.getElementById("tree-histogram");
 
   // Simulation Elements
@@ -96,9 +89,6 @@ document.addEventListener("DOMContentLoaded", () => {
     resFidelityBadge.style.borderColor = "var(--border-subtle)";
     resFidelityBadge.style.background = "var(--bg-subtle)";
     resFidelityDesc.textContent = "Configure parameters on the left, then click 'Predict Success Probability'.";
-    resDecoherence.textContent = "--%";
-    resDensity.textContent = "--";
-    resEntanglement.textContent = "--%";
     resConfidenceScore.textContent = "--.-%";
     resConfidenceScore.style.color = "var(--text-muted)";
     resConfidenceBar.style.width = "0%";
@@ -106,9 +96,6 @@ document.addEventListener("DOMContentLoaded", () => {
     resConfidencePill.style.color = "var(--text-muted)";
     resConfidencePill.style.borderColor = "var(--border-subtle)";
     resConfidencePill.style.background = "var(--bg-subtle)";
-    resCiRange.textContent = "[--%, --%]";
-    resCiMargin.textContent = "Margin: ±--%";
-    resStdError.textContent = "0.0000";
     treeHistogram.innerHTML = '<div class="hist-empty-placeholder">Click Predict to compute tree spread</div>';
   }
 
@@ -424,10 +411,6 @@ document.addEventListener("DOMContentLoaded", () => {
     resFidelityBadge.style.background = `${fidelity.color}15`;
     resFidelityDesc.textContent = fidelity.description;
 
-    resDecoherence.textContent = `${(100 - probPct).toFixed(2)}%`;
-    resDensity.textContent = telemetry.depth_density;
-    resEntanglement.textContent = `${telemetry.entanglement_ratio_pct}%`;
-
     // 3. Confidence Metrics
     resConfidenceScore.textContent = `${conf.score.toFixed(1)}%`;
     resConfidenceScore.style.color = conf.color;
@@ -437,10 +420,6 @@ document.addEventListener("DOMContentLoaded", () => {
     resConfidencePill.style.color = conf.color;
     resConfidencePill.style.borderColor = `${conf.color}50`;
     resConfidencePill.style.background = `${conf.color}15`;
-
-    resCiRange.textContent = `[${conf.ci_95.lower_pct}%, ${conf.ci_95.upper_pct}%]`;
-    resCiMargin.textContent = `Margin: ±${conf.ci_95.margin_pct}%`;
-    resStdError.textContent = conf.std_error.toFixed(4);
 
     // 4. Distribution Histogram
     renderTreeHistogram(conf.distribution);

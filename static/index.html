@@ -243,20 +243,6 @@
               <p id="res-fidelity-desc" class="fidelity-desc">Click 'Predict Success Probability' to calculate.</p>
             </div>
 
-            <div class="quick-stats-strip">
-              <div class="q-stat">
-                <span class="q-lbl">Decoherence Loss</span>
-                <span id="res-decoherence-loss" class="q-val">--%</span>
-              </div>
-              <div class="q-stat">
-                <span class="q-lbl">Gate Density</span>
-                <span id="res-depth-density" class="q-val">--</span>
-              </div>
-              <div class="q-stat">
-                <span class="q-lbl">2Q Entanglement</span>
-                <span id="res-entanglement-ratio" class="q-val">--%</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -273,7 +259,7 @@
           <div class="confidence-meter-row">
             <div class="score-col">
               <span id="res-confidence-score" class="big-score">--.-%</span>
-              <span class="score-sub">Consensus Confidence</span>
+              <span class="score-sub">Tree Agreement</span>
             </div>
 
             <div class="meter-col">
@@ -289,29 +275,14 @@
             </div>
           </div>
 
-          <div class="conf-details-strip">
-            <div class="conf-box">
-              <span class="c-lbl">95% Confidence Interval</span>
-              <span id="res-ci-range" class="c-val">[--%, --%]</span>
-              <span id="res-ci-margin" class="c-sub">Margin: ±--%</span>
-            </div>
-            <div class="conf-box">
-              <span class="c-lbl">Standard Error (σ)</span>
-              <span id="res-std-error" class="c-val">0.0000</span>
-              <span class="c-sub">Dispersion</span>
-            </div>
-            <div class="conf-box">
-              <span class="c-lbl">Model Reliability</span>
-              <span class="c-val">R² = 0.9693</span>
-              <span class="c-sub">MAE: 0.0070</span>
-            </div>
-          </div>
-
           <!-- Tree Prediction Spread Histogram -->
           <div class="hist-wrap">
-            <span class="hist-label">Prediction Distribution & Error Spread</span>
+            <div class="hist-header">
+              <span class="hist-label">Ensemble Tree Prediction Distribution</span>
+              <span class="hist-sub">Distribution of 200 Decision Trees (tighter = higher confidence)</span>
+            </div>
             <div class="hist-container" id="tree-histogram">
-              <div class="hist-empty-placeholder">Run prediction to visualize distribution spread</div>
+              <div class="hist-empty-placeholder">Click Predict to compute tree spread</div>
             </div>
           </div>
         </div>
