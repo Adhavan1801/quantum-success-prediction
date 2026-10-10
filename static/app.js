@@ -1,6 +1,6 @@
 // =============================================================
 // app.js — Client-Side Logic for Quantum Success Prediction UI
-// Clean Light Theme, Explicit Ranges, Best Model Pipeline
+// Only predicts when the user clicks "Predict Success Probability"
 // =============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
     noise_type: "none",
     noise_strength: 0.0,
     auto_metrics: true,
+    hasPredicted: false,
   };
 
   // DOM Elements
@@ -81,8 +82,44 @@ document.addEventListener("DOMContentLoaded", () => {
   // -------------------------------------------------------------
   function init() {
     setupEventListeners();
+    // Initialize default circuit metrics without predicting
     updateCircuitEstimate();
-    executePrediction();
+    resetResultsToAwaiting();
+  }
+
+  function resetResultsToAwaiting() {
+    gaugeFill.style.strokeDashoffset = CIRCUMFERENCE;
+    resProbPct.textContent = "--.-%";
+    resProbRaw.textContent = "P = awaiting input";
+    resFidelityBadge.textContent = "Awaiting Prediction";
+    resFidelityBadge.style.color = "var(--text-muted)";
+    resFidelityBadge.style.borderColor = "var(--border-subtle)";
+    resFidelityBadge.style.background = "var(--bg-subtle)";
+    resFidelityDesc.textContent = "Configure parameters on the left, then click 'Predict Success Probability'.";
+    resDecoherence.textContent = "--%";
+    resDensity.textContent = "--";
+    resEntanglement.textContent = "--%";
+    resConfidenceScore.textContent = "--.-%";
+    resConfidenceScore.style.color = "var(--text-muted)";
+    resConfidenceBar.style.width = "0%";
+    resConfidencePill.textContent = "Awaiting Prediction";
+    resConfidencePill.style.color = "var(--text-muted)";
+    resConfidencePill.style.borderColor = "var(--border-subtle)";
+    resConfidencePill.style.background = "var(--bg-subtle)";
+    resCiRange.textContent = "[--%, --%]";
+    resCiMargin.textContent = "Margin: ±--%";
+    resStdError.textContent = "0.0000";
+    treeHistogram.innerHTML = '<div class="hist-empty-placeholder">Click Predict to compute tree spread</div>';
+  }
+
+  function markParametersChanged() {
+    if (state.hasPredicted) {
+      resFidelityBadge.textContent = "Parameters Modified";
+      resFidelityBadge.style.color = "var(--color-primary)";
+      resFidelityBadge.style.borderColor = "var(--color-primary)";
+      resFidelityBadge.style.background = "var(--color-primary-light)";
+      resFidelityDesc.textContent = "Inputs changed. Click 'Predict Success Probability' to calculate updated output.";
+    }
   }
 
   // -------------------------------------------------------------
@@ -99,7 +136,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (state.auto_metrics) {
           updateCircuitEstimate();
         } else {
-          executePrediction();
+          validateInputs();
+          markParametersChanged();
         }
       });
     });
@@ -148,21 +186,21 @@ document.addEventListener("DOMContentLoaded", () => {
     inputDepth.addEventListener("input", () => {
       state.circuit_depth = parseInt(inputDepth.value, 10) || 6;
       validateInputs();
-      executePrediction();
+      markParametersChanged();
     });
 
     inputGate1q.addEventListener("input", () => {
       state.gate_count_1q = parseInt(inputGate1q.value, 10) || 8;
       updateTotalGates();
       validateInputs();
-      executePrediction();
+      markParametersChanged();
     });
 
     inputGate2q.addEventListener("input", () => {
       state.gate_count_2q = parseInt(inputGate2q.value, 10) || 3;
       updateTotalGates();
       validateInputs();
-      executePrediction();
+      markParametersChanged();
     });
 
     // Noise Model Selection
@@ -173,7 +211,8 @@ document.addEventListener("DOMContentLoaded", () => {
         state.noise_type = btn.dataset.noise;
 
         configureNoiseControls(state.noise_type);
-        executePrediction();
+        validateInputs();
+        markParametersChanged();
       });
     });
 
@@ -183,12 +222,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (isNaN(val)) val = 0.0;
       state.noise_strength = val;
       validateInputs();
-      executePrediction();
+      markParametersChanged();
     });
 
-    // Predict Button Click
+    // Predict Button Click (ONLY entry point for prediction)
     btnPredict.addEventListener("click", () => {
-      executePrediction(true);
+      performPredictionCall();
     });
 
     // Simulate Button Click
@@ -210,13 +249,13 @@ document.addEventListener("DOMContentLoaded", () => {
       updateCircuitEstimate();
     } else {
       validateInputs();
-      executePrediction();
+      markParametersChanged();
     }
   }
 
   function updateToggleState() {
     if (state.auto_metrics) {
-      toggleLabel.textContent = "Auto-compute from circuit";
+      toggleLabel.textContent = "Auto-compute";
       inputDepth.setAttribute("readonly", true);
       inputGate1q.setAttribute("readonly", true);
       inputGate2q.setAttribute("readonly", true);
@@ -239,7 +278,7 @@ document.addEventListener("DOMContentLoaded", () => {
       inputNoiseStrength.value = "0.000";
       inputNoiseStrength.readOnly = true;
       noiseRangePill.textContent = "Range: 0.000 (Ideal)";
-      noiseHelpText.textContent = "Ideal noiseless quantum simulation without environmental interaction.";
+      noiseHelpText.textContent = "Ideal noiseless quantum simulation without decoherence.";
       noiseUnitTag.textContent = "rate";
       state.noise_strength = 0.0;
     } else if (noiseType === "depolarizing") {
@@ -278,7 +317,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Fetch Circuit Estimates
+  // Fetch Circuit Estimates (Does NOT trigger prediction)
   async function updateCircuitEstimate() {
     try {
       const res = await fetch(`/api/circuit_estimate?algorithm=${state.algorithm}&n_qubits=${state.n_qubits}`);
@@ -296,7 +335,7 @@ document.addEventListener("DOMContentLoaded", () => {
         inputGateTotal.value = m.total_gate_count;
 
         validateInputs();
-        executePrediction();
+        markParametersChanged();
       }
     } catch (err) {
       console.error("Error fetching circuit metrics:", err);
@@ -325,20 +364,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // -------------------------------------------------------------
-  // PREDICTION EXECUTION
+  // PREDICTION EXECUTION (Triggered ONLY on "Predict" button click)
   // -------------------------------------------------------------
-  let debounceTimer = null;
-
-  function executePrediction(immediate = false) {
-    if (debounceTimer) clearTimeout(debounceTimer);
-
-    if (immediate) {
-      performPredictionCall();
-    } else {
-      debounceTimer = setTimeout(performPredictionCall, 120);
-    }
-  }
-
   async function performPredictionCall() {
     btnPredict.textContent = "Calculating...";
 
@@ -362,16 +389,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const res = await response.json();
       if (res.status === "success") {
+        state.hasPredicted = true;
         renderPredictionResults(res);
       } else {
-        showToast(res.message || "Prediction error", "error");
+        showToast(res.message || "Prediction error");
       }
     } catch (err) {
       console.error("Prediction API failed:", err);
-      showToast("Server connection error during prediction", "error");
+      showToast("Server connection error during prediction");
     } finally {
       btnPredict.innerHTML = `
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
         Predict Success Probability
       `;
     }
@@ -379,7 +407,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Render Prediction Results (Using Best Model: Decision Tree R² = 0.9693)
   function renderPredictionResults(res) {
-    // Best model is Decision Tree (highest R² and lowest MAE)
     const prob = res.prediction.decision_tree_probability;
     const probPct = res.prediction.decision_tree_probability_pct;
     const conf = res.confidence;
@@ -522,17 +549,16 @@ document.addEventListener("DOMContentLoaded", () => {
           simBitstringsList.appendChild(card);
         });
 
-        simCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
         showToast("Live Qiskit Aer simulation complete!");
       } else {
-        showToast(data.message || "Simulation error", "error");
+        showToast(data.message || "Simulation error");
       }
     } catch (err) {
       console.error("Simulation error:", err);
-      showToast("Failed to run Qiskit simulation", "error");
+      showToast("Failed to run Qiskit simulation");
     } finally {
       btnSimulate.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6z"/></svg>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6z"/></svg>
         Verify with Live Qiskit (Aer)
       `;
     }
