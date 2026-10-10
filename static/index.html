@@ -159,7 +159,7 @@
         <div class="card-box">
           <div class="card-head">
             <label class="card-label">Quantum Noise Model</label>
-            <span class="range-pill" id="noise-range-pill">Range: 0.000 (Ideal)</span>
+            <span class="range-pill" id="noise-range-pill">Strength: — (Ideal)</span>
           </div>
 
           <div class="noise-row" id="noise-selector">
@@ -184,15 +184,9 @@
             </button>
           </div>
 
-          <div class="noise-input-row">
-            <div class="noise-input-wrap">
-              <label for="input-noise-strength" class="sub-label">Noise Strength</label>
-              <div class="input-with-tag">
-                <input type="number" id="input-noise-strength" min="0" max="0.10" step="0.001" value="0.000" class="n-input" readonly>
-                <span class="tag-unit" id="noise-unit-tag">rate</span>
-              </div>
-            </div>
-            <p class="noise-hint" id="noise-help-text">Ideal noiseless quantum simulation without decoherence.</p>
+          <div class="noise-field-box">
+            <label for="input-noise-strength" class="noise-strength-label">Noise Strength (p)</label>
+            <input type="number" id="input-noise-strength" min="0" max="0.10" step="0.001" value="0.000" class="m-input" readonly>
           </div>
         </div>
 

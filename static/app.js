@@ -39,8 +39,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const inputNoiseStrength = document.getElementById("input-noise-strength");
   const noiseRangePill = document.getElementById("noise-range-pill");
-  const noiseHelpText = document.getElementById("noise-help-text");
-  const noiseUnitTag = document.getElementById("noise-unit-tag");
 
   const btnPredict = document.getElementById("btn-predict");
   const btnSimulate = document.getElementById("btn-simulate");
@@ -264,9 +262,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (noiseType === "none") {
       inputNoiseStrength.value = "0.000";
       inputNoiseStrength.readOnly = true;
-      noiseRangePill.textContent = "Range: 0.000 (Ideal)";
-      noiseHelpText.textContent = "Ideal noiseless quantum simulation without decoherence.";
-      noiseUnitTag.textContent = "rate";
+      noiseRangePill.textContent = "Strength: — (Ideal)";
       state.noise_strength = 0.0;
     } else if (noiseType === "depolarizing") {
       inputNoiseStrength.min = "0.001";
@@ -274,33 +270,27 @@ document.addEventListener("DOMContentLoaded", () => {
       inputNoiseStrength.step = "0.001";
       inputNoiseStrength.readOnly = false;
       const val = customVal !== null ? customVal : 0.010;
-      inputNoiseStrength.value = val;
+      inputNoiseStrength.value = val.toFixed(3);
       state.noise_strength = val;
-      noiseRangePill.textContent = "Range: 0.001 – 0.100 (p)";
-      noiseHelpText.textContent = "Depolarizing noise: Probability 'p' of replacing qubit state with maximally mixed state per gate.";
-      noiseUnitTag.textContent = "error p";
+      noiseRangePill.textContent = "p = 0.001 – 0.100";
     } else if (noiseType === "amplitude_damping") {
       inputNoiseStrength.min = "0.001";
       inputNoiseStrength.max = "0.100";
       inputNoiseStrength.step = "0.001";
       inputNoiseStrength.readOnly = false;
       const val = customVal !== null ? customVal : 0.010;
-      inputNoiseStrength.value = val;
+      inputNoiseStrength.value = val.toFixed(3);
       state.noise_strength = val;
-      noiseRangePill.textContent = "Range: 0.001 – 0.100 (γ)";
-      noiseHelpText.textContent = "Amplitude damping: Energy decay probability 'γ' (|1⟩ → |0⟩), modeling spontaneous emission & T1 relaxation.";
-      noiseUnitTag.textContent = "decay γ";
+      noiseRangePill.textContent = "γ = 0.001 – 0.100";
     } else if (noiseType === "thermal_relaxation") {
       inputNoiseStrength.min = "0.010";
       inputNoiseStrength.max = "0.100";
       inputNoiseStrength.step = "0.005";
       inputNoiseStrength.readOnly = false;
       const val = customVal !== null ? customVal : 0.033;
-      inputNoiseStrength.value = val;
+      inputNoiseStrength.value = val.toFixed(3);
       state.noise_strength = val;
-      noiseRangePill.textContent = "Range: 0.010 – 0.100 (1/T1)";
-      noiseHelpText.textContent = "Thermal relaxation: Combined longitudinal relaxation (T1) and transverse dephasing (T2), real hardware decoherence.";
-      noiseUnitTag.textContent = "strength";
+      noiseRangePill.textContent = "T = 0.010 – 0.100";
     }
   }
 
