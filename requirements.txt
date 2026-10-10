@@ -31,3 +31,6 @@ tqdm
 
 # --- Testing ---
 pytest
+
+# --- Web UI & Local Server ---
+flask>=3.0
