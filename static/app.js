@@ -14,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
     total_gate_count: 11,
     noise_type: "none",
     noise_strength: 0.0,
-    auto_metrics: true,
     hasPredicted: false,
   };
 
@@ -22,8 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const algoBtns = document.querySelectorAll(".algo-btn");
   const noiseBtns = document.querySelectorAll(".noise-btn");
   
-  const toggleAuto = document.getElementById("toggle-auto-metrics");
-  const toggleLabel = document.getElementById("toggle-label");
   
   const inputN = document.getElementById("input-n-qubits");
   const btnDecQubits = document.getElementById("btn-dec-qubits");
@@ -32,7 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const inputDepth = document.getElementById("input-circuit-depth");
   const inputGate1q = document.getElementById("input-gate-1q");
   const inputGate2q = document.getElementById("input-gate-2q");
-  const inputGateTotal = document.getElementById("input-gate-total");
 
   const metricWarning = document.getElementById("metric-warning");
   const metricWarningText = document.getElementById("metric-warning-text");
@@ -46,7 +42,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Results Elements
   const gaugeFill = document.getElementById("gauge-fill");
   const resProbPct = document.getElementById("res-prob-pct");
-  const resProbRaw = document.getElementById("res-prob-raw");
   const resFidelityBadge = document.getElementById("res-fidelity-badge");
   const resFidelityDesc = document.getElementById("res-fidelity-desc");
   const resConfidenceScore = document.getElementById("res-confidence-score");
@@ -81,7 +76,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function resetResultsToAwaiting() {
     gaugeFill.style.strokeDashoffset = CIRCUMFERENCE;
     resProbPct.textContent = "--.-%";
-    resProbRaw.textContent = "P = awaiting input";
     resFidelityBadge.textContent = "Awaiting Prediction";
     resFidelityBadge.style.color = "var(--text-muted)";
     resFidelityBadge.style.borderColor = "var(--border-subtle)";
@@ -118,22 +112,8 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.classList.add("active");
         state.algorithm = btn.dataset.algo;
 
-        if (state.auto_metrics) {
-          updateCircuitEstimate();
-        } else {
-          validateInputs();
-          markParametersChanged();
-        }
-      });
-    });
-
-    // Auto-Metrics Toggle
-    toggleAuto.addEventListener("change", (e) => {
-      state.auto_metrics = e.target.checked;
-      updateToggleState();
-      if (state.auto_metrics) {
         updateCircuitEstimate();
-      }
+      });
     });
 
     // Qubits Stepper Controls
@@ -230,31 +210,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function handleQubitChange() {
-    if (state.auto_metrics) {
-      updateCircuitEstimate();
-    } else {
-      validateInputs();
-      markParametersChanged();
-    }
-  }
-
-  function updateToggleState() {
-    if (state.auto_metrics) {
-      toggleLabel.textContent = "Auto-compute";
-      inputDepth.setAttribute("readonly", true);
-      inputGate1q.setAttribute("readonly", true);
-      inputGate2q.setAttribute("readonly", true);
-    } else {
-      toggleLabel.textContent = "Manual configuration";
-      inputDepth.removeAttribute("readonly");
-      inputGate1q.removeAttribute("readonly");
-      inputGate2q.removeAttribute("readonly");
-    }
+    updateCircuitEstimate();
   }
 
   function updateTotalGates() {
     state.total_gate_count = state.gate_count_1q + state.gate_count_2q;
-    inputGateTotal.value = state.total_gate_count;
   }
 
   // Configure Noise controls per noise type
@@ -309,7 +269,6 @@ document.addEventListener("DOMContentLoaded", () => {
         inputDepth.value = m.circuit_depth;
         inputGate1q.value = m.gate_count_1q;
         inputGate2q.value = m.gate_count_2q;
-        inputGateTotal.value = m.total_gate_count;
 
         validateInputs();
         markParametersChanged();
@@ -392,7 +351,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 1. Gauge Animation
     animateGauge(prob, probPct);
-    resProbRaw.textContent = `P = ${prob.toFixed(6)}`;
 
     // 2. Fidelity Meta
     resFidelityBadge.textContent = fidelity.status;

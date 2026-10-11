@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quantum Success Prediction</title>
+  <!-- Short Project Intro -->
+  <meta name="description" content="Prediction of success probability for quantum algorithms under noise.">
+  <style>
+    .project-intro {font-family: var(--font-sans); color: var(--text-secondary); margin-top: 0.4rem; font-size: 0.9rem;}
+  </style>
   <meta name="description" content="Predict success probability and confidence scores of quantum algorithms under noise using trained machine learning models.">
   
   <!-- Google Fonts -->
@@ -44,15 +49,14 @@
       </div>
     </div>
   </header>
-
   <!-- Non-scrollable Main Single Viewport Layout -->
   <main class="main-layout">
     <!-- Left Column: Input Deck -->
     <section class="panel-col" aria-label="Input Configuration">
-      <div class="panel-head">
-        <span class="step-badge">1</span>
-        <h2>Circuit & Noise Inputs</h2>
-        <span class="sub-hint">Ranges specified for all parameters</span>
+      <div class="intro-box">
+        <p class="intro-text">Predicts the <strong>success probability</strong> of quantum algorithms
+        (Deutsch-Jozsa, Bernstein-Vazirani, Simon's) under real noise models, using a Decision Tree ML
+        model trained on 1,386 Qiskit Aer simulations.</p>
       </div>
 
       <form id="prediction-form" class="inputs-deck" onsubmit="return false;">
@@ -90,17 +94,10 @@
           </div>
         </div>
 
-        <!-- Card 2: Qubit Count & Circuit Metrics -->
+        <!-- Card 2: Circuit Parameters -->
         <div class="card-box">
           <div class="card-head">
-            <div class="title-with-toggle">
-              <label class="card-label">Circuit Geometry</label>
-              <label class="switch-toggle" title="Auto-compute circuit properties">
-                <input type="checkbox" id="toggle-auto-metrics" checked>
-                <span class="slider-round"></span>
-              </label>
-              <span class="toggle-text" id="toggle-label">Auto-compute</span>
-            </div>
+            <label class="card-label">Circuit Parameters</label>
             <span class="range-pill" id="qubit-range-pill">Range: 2 – 8 Qubits</span>
           </div>
 
@@ -114,14 +111,14 @@
             </div>
           </div>
 
-          <!-- 4 Compact Metric Cells -->
+          <!-- 3 Compact Metric Cells -->
           <div class="metrics-grid" id="circuit-metrics-container">
             <div class="metric-cell">
               <div class="m-head">
                 <label for="input-circuit-depth">Depth</label>
                 <span class="m-range">3 – 12</span>
               </div>
-              <input type="number" id="input-circuit-depth" min="3" max="12" step="1" value="6" class="m-input" readonly>
+              <input type="number" id="input-circuit-depth" min="3" max="12" step="1" value="6" class="m-input">
             </div>
 
             <div class="metric-cell">
@@ -129,7 +126,7 @@
                 <label for="input-gate-1q">1Q Gates</label>
                 <span class="m-range">4 – 27</span>
               </div>
-              <input type="number" id="input-gate-1q" min="4" max="27" step="1" value="8" class="m-input" readonly>
+              <input type="number" id="input-gate-1q" min="4" max="27" step="1" value="8" class="m-input">
             </div>
 
             <div class="metric-cell">
@@ -137,15 +134,7 @@
                 <label for="input-gate-2q">2Q Gates</label>
                 <span class="m-range">0 – 11</span>
               </div>
-              <input type="number" id="input-gate-2q" min="0" max="11" step="1" value="3" class="m-input" readonly>
-            </div>
-
-            <div class="metric-cell">
-              <div class="m-head">
-                <label for="input-gate-total">Total</label>
-                <span class="m-range">5 – 35</span>
-              </div>
-              <input type="number" id="input-gate-total" min="5" max="35" step="1" value="11" class="m-input" readonly>
+              <input type="number" id="input-gate-2q" min="0" max="11" step="1" value="3" class="m-input">
             </div>
           </div>
 
@@ -225,7 +214,6 @@
               <div class="gauge-center-content">
                 <span class="gauge-label">Success Rate</span>
                 <span id="res-prob-pct" class="gauge-value">--.-%</span>
-                <span id="res-prob-raw" class="gauge-subvalue">P = 0.000000</span>
               </div>
             </div>
           </div>
