@@ -393,23 +393,23 @@ def predict():
         confidence_level = "Low Confidence (Elevated Variance)"
         confidence_color = "#ef4444"  # Crimson
 
-    # Quantum fidelity interpretation
-    if rf_pred_clamped >= 0.98:
-        fidelity_status = "Optimal Quantum Coherence"
-        fidelity_color = "#10b981"
-        fidelity_desc = "Near-ideal quantum state fidelity. Noise impact is negligible."
-    elif rf_pred_clamped >= 0.90:
-        fidelity_status = "High Fidelity"
-        fidelity_color = "#00f5d4"
-        fidelity_desc = "Minor decoherence observed. Algorithm output remains highly distinguishable."
-    elif rf_pred_clamped >= 0.75:
-        fidelity_status = "Moderate Noise Degradation"
-        fidelity_color = "#f59e0b"
-        fidelity_desc = "Substantial noise distortion. Circuit output degraded by quantum errors."
+    # Success probability assessment
+    if dt_pred_clamped >= 0.95:
+        success_status = "Very High Success Probability"
+        success_color = "#10b981"
+        success_desc = "Near-ideal algorithm execution with high probability of measuring the correct state."
+    elif dt_pred_clamped >= 0.85:
+        success_status = "High Success Probability"
+        success_color = "#00f5d4"
+        success_desc = "Reliable algorithm execution with low noise impact on output bitstrings."
+    elif dt_pred_clamped >= 0.70:
+        success_status = "Moderate Success Probability"
+        success_color = "#f59e0b"
+        success_desc = "Noticeable noise impact. Probability of erroneous measurement is elevated."
     else:
-        fidelity_status = "Severe Quantum Decoherence"
-        fidelity_color = "#ef4444"
-        fidelity_desc = "High error accumulation. Algorithm outcome severely compromised by environment."
+        success_status = "Low Success Probability"
+        success_color = "#ef4444"
+        success_desc = "High noise degradation. Measurements are dispersed toward random bitstrings."
 
     # Distribution histogram of trees (10 bins for visualization)
     hist, bin_edges = np.histogram(tree_preds_clamped, bins=10, range=(0.0, 1.0))
@@ -456,11 +456,15 @@ def predict():
             },
             "distribution": distribution_bins,
         },
+        "success_assessment": {
+            "status": success_status,
+            "color": success_color,
+            "description": success_desc,
+        },
         "fidelity": {
-            "status": fidelity_status,
-            "color": fidelity_color,
-            "description": fidelity_desc,
-            "estimated_decoherence_loss": round((1.0 - rf_pred_clamped) * 100, 2),
+            "status": success_status,
+            "color": success_color,
+            "description": success_desc,
         },
         "circuit_telemetry": {
             "depth_density": depth_density,

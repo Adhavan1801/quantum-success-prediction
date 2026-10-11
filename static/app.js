@@ -420,12 +420,13 @@ document.addEventListener("DOMContentLoaded", () => {
     // 1. Gauge Animation
     animateGauge(prob, probPct);
 
-    // 2. Fidelity Meta
-    resFidelityBadge.textContent = fidelity.status;
-    resFidelityBadge.style.color = fidelity.color;
-    resFidelityBadge.style.borderColor = fidelity.color;
-    resFidelityBadge.style.background = `${fidelity.color}15`;
-    resFidelityDesc.textContent = fidelity.description;
+    // 2. Success Probability Meta Assessment
+    const assessment = res.success_assessment || res.fidelity;
+    resFidelityBadge.textContent = assessment.status;
+    resFidelityBadge.style.color = assessment.color;
+    resFidelityBadge.style.borderColor = assessment.color;
+    resFidelityBadge.style.background = `${assessment.color}15`;
+    resFidelityDesc.textContent = assessment.description;
 
     // 3. Confidence Metrics
     resConfidenceScore.textContent = `${conf.score.toFixed(1)}%`;
