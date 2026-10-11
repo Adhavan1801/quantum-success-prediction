@@ -44,10 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const resProbPct = document.getElementById("res-prob-pct");
   const resFidelityBadge = document.getElementById("res-fidelity-badge");
   const resFidelityDesc = document.getElementById("res-fidelity-desc");
-  const resConfidenceScore = document.getElementById("res-confidence-score");
-  const resConfidenceBar = document.getElementById("res-confidence-bar");
-  const resConfidencePill = document.getElementById("res-confidence-pill");
-  const treeHistogram = document.getElementById("tree-histogram");
 
   // Simulation Elements
   const simCard = document.getElementById("simulation-result-card");
@@ -81,14 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
     resFidelityBadge.style.borderColor = "var(--border-subtle)";
     resFidelityBadge.style.background = "var(--bg-subtle)";
     resFidelityDesc.textContent = "Configure parameters on the left, then click 'Predict Success Probability'.";
-    resConfidenceScore.textContent = "--.-%";
-    resConfidenceScore.style.color = "var(--text-muted)";
-    resConfidenceBar.style.width = "0%";
-    resConfidencePill.textContent = "Awaiting Prediction";
-    resConfidencePill.style.color = "var(--text-muted)";
-    resConfidencePill.style.borderColor = "var(--border-subtle)";
-    resConfidencePill.style.background = "var(--bg-subtle)";
-    treeHistogram.innerHTML = '<div class="hist-empty-placeholder">Click Predict to compute tree spread</div>';
+
   }
 
   function markParametersChanged() {
@@ -428,18 +417,7 @@ document.addEventListener("DOMContentLoaded", () => {
     resFidelityBadge.style.background = `${assessment.color}15`;
     resFidelityDesc.textContent = assessment.description;
 
-    // 3. Confidence Metrics
-    resConfidenceScore.textContent = `${conf.score.toFixed(1)}%`;
-    resConfidenceScore.style.color = conf.color;
-    resConfidenceBar.style.width = `${Math.min(100, Math.max(0, conf.score))}%`;
-    resConfidenceBar.style.background = conf.color;
-    resConfidencePill.textContent = conf.level;
-    resConfidencePill.style.color = conf.color;
-    resConfidencePill.style.borderColor = `${conf.color}50`;
-    resConfidencePill.style.background = `${conf.color}15`;
 
-    // 4. Distribution Histogram
-    renderTreeHistogram(conf.distribution);
   }
 
   // Gauge SVG Animation
@@ -473,33 +451,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     };
     window.requestAnimationFrame(step);
-  }
-
-  // Render Histogram
-  function renderTreeHistogram(distribution) {
-    if (!distribution || !distribution.length) return;
-    treeHistogram.innerHTML = "";
-
-    const maxCount = Math.max(...distribution.map(d => d.count), 1);
-
-    distribution.forEach((bin) => {
-      const col = document.createElement("div");
-      col.className = "hist-bar-col";
-      col.title = `Range: [${bin.bin_start} - ${bin.bin_end}] | Trees: ${bin.count} (${bin.percentage}%)`;
-
-      const heightPct = (bin.count / maxCount) * 100;
-
-      const bar = document.createElement("div");
-      bar.className = "hist-bar";
-      bar.style.height = `${Math.max(4, heightPct)}%`;
-
-      if (bin.count === 0) {
-        bar.style.opacity = "0.2";
-      }
-
-      col.appendChild(bar);
-      treeHistogram.appendChild(col);
-    });
   }
 
   // -------------------------------------------------------------

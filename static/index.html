@@ -221,56 +221,21 @@
           <div class="hero-meta-side">
             <div class="meta-block">
               <span class="meta-label">Success Probability Status</span>
-              <span id="res-fidelity-badge" class="fidelity-badge">Awaiting Input</span>
-              <p id="res-fidelity-desc" class="fidelity-desc">Click 'Predict Success Probability' to calculate.</p>
+              <span id="res-fidelity-badge" class="fidelity-badge">Awaiting Prediction</span>
+              <p id="res-fidelity-desc" class="fidelity-desc">Configure parameters on the left, then click 'Predict Success Probability'.</p>
             </div>
 
+            <div class="meta-block">
+              <span class="meta-label">Primary ML Architecture</span>
+              <span class="badge-tag">Decision Tree Regressor (R² = 0.9693 • MAE = 0.0070)</span>
+            </div>
           </div>
         </div>
 
-        <!-- Confidence Score Card -->
-        <div class="card-box confidence-card" id="confidence-card">
-          <div class="card-head">
-            <div class="title-with-icon">
-              <svg class="card-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-              <h3 class="card-label">Model Confidence Score</h3>
-            </div>
-            <span id="res-confidence-pill" class="confidence-pill">Calculating...</span>
-          </div>
 
-          <div class="confidence-meter-row">
-            <div class="score-col">
-              <span id="res-confidence-score" class="big-score">--.-%</span>
-              <span class="score-sub">Tree Agreement</span>
-            </div>
-
-            <div class="meter-col">
-              <div class="bar-track">
-                <div id="res-confidence-bar" class="bar-fill" style="width: 0%;"></div>
-              </div>
-              <div class="scale-labels">
-                <span>0% Low</span>
-                <span>80% Moderate</span>
-                <span>90% High</span>
-                <span>100% Extreme</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tree Prediction Spread Histogram -->
-          <div class="hist-wrap">
-            <div class="hist-header">
-              <span class="hist-label">Ensemble Tree Prediction Distribution</span>
-              <span class="hist-sub">Distribution of 200 Decision Trees (tighter = higher confidence)</span>
-            </div>
-            <div class="hist-container" id="tree-histogram">
-              <div class="hist-empty-placeholder">Click Predict to compute tree spread</div>
-            </div>
-          </div>
-        </div>
 
         <!-- Live Qiskit Aer Simulation Card (Compact) -->
-        <div id="simulation-result-card" class="card-box sim-card hidden">
+        <div id="simulation-result-card" class="card-box sim-card">
           <div class="card-head">
             <div class="title-with-icon">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
@@ -294,7 +259,7 @@
             </div>
           </div>
 
-          <div id="sim-bitstrings-list" class="bitstrings-row"></div>
+          <div id="sim-bitstrings-list" class="bitstrings-row"><span class="sim-placeholder-text">Click 'Verify with Live Qiskit (Aer)' on the left to execute 4,096 simulation shots.</span></div>
         </div>
       </div>
     </section>

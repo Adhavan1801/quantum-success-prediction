@@ -1095,3 +1095,11 @@ html, body {
 .hidden {
   display: none !important;
 }
+
+
+.sim-placeholder-text {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 0.35rem 0.2rem;
+}
