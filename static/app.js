@@ -42,8 +42,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Results Elements
   const gaugeFill = document.getElementById("gauge-fill");
   const resProbPct = document.getElementById("res-prob-pct");
-  const resFidelityBadge = document.getElementById("res-fidelity-badge");
-  const resFidelityDesc = document.getElementById("res-fidelity-desc");
+  const resStatusBadge = document.getElementById("res-status-badge") || document.getElementById("res-fidelity-badge");
+  const resStatusDesc = document.getElementById("res-status-desc") || document.getElementById("res-fidelity-desc");
 
   // Simulation Elements
   const simCard = document.getElementById("simulation-result-card");
@@ -72,21 +72,29 @@ document.addEventListener("DOMContentLoaded", () => {
   function resetResultsToAwaiting() {
     gaugeFill.style.strokeDashoffset = CIRCUMFERENCE;
     resProbPct.textContent = "--.-%";
-    resFidelityBadge.textContent = "Awaiting Prediction";
-    resFidelityBadge.style.color = "var(--text-muted)";
-    resFidelityBadge.style.borderColor = "var(--border-subtle)";
-    resFidelityBadge.style.background = "var(--bg-subtle)";
-    resFidelityDesc.textContent = "Configure parameters on the left, then click 'Predict Success Probability'.";
+    if (resStatusBadge) {
+      resStatusBadge.textContent = "Awaiting Prediction";
+      resStatusBadge.style.color = "var(--text-muted)";
+      resStatusBadge.style.borderColor = "var(--border-subtle)";
+      resStatusBadge.style.background = "var(--bg-subtle)";
+    }
+    if (resStatusDesc) {
+      resStatusDesc.textContent = "Configure parameters on the left, then click 'Predict Success Probability'.";
+    }
 
   }
 
   function markParametersChanged() {
     if (state.hasPredicted) {
-      resFidelityBadge.textContent = "Parameters Modified";
-      resFidelityBadge.style.color = "var(--color-primary)";
-      resFidelityBadge.style.borderColor = "var(--color-primary)";
-      resFidelityBadge.style.background = "var(--color-primary-light)";
-      resFidelityDesc.textContent = "Inputs changed. Click 'Predict Success Probability' to calculate updated output.";
+      if (resStatusBadge) {
+        resStatusBadge.textContent = "Parameters Modified";
+        resStatusBadge.style.color = "var(--color-primary)";
+        resStatusBadge.style.borderColor = "var(--color-primary)";
+        resStatusBadge.style.background = "var(--color-primary-light)";
+      }
+      if (resStatusDesc) {
+        resStatusDesc.textContent = "Inputs changed. Click 'Predict Success Probability' to calculate updated output.";
+      }
     }
   }
 
@@ -403,19 +411,43 @@ document.addEventListener("DOMContentLoaded", () => {
     const prob = res.prediction.decision_tree_probability;
     const probPct = res.prediction.decision_tree_probability_pct;
     const conf = res.confidence;
-    const fidelity = res.fidelity;
     const telemetry = res.circuit_telemetry;
 
     // 1. Gauge Animation
     animateGauge(prob, probPct);
 
-    // 2. Success Probability Meta Assessment
-    const assessment = res.success_assessment || res.fidelity;
-    resFidelityBadge.textContent = assessment.status;
-    resFidelityBadge.style.color = assessment.color;
-    resFidelityBadge.style.borderColor = assessment.color;
-    resFidelityBadge.style.background = `${assessment.color}15`;
-    resFidelityDesc.textContent = assessment.description;
+    // 2. Pure Success Probability Meta Assessment
+    let statusText = "High Success Probability";
+    let statusColor = "#059669";
+    let statusDesc = `High algorithm reliability: ~${probPct.toFixed(1)}% expected correct measurements.`;
+
+    if (prob >= 0.95) {
+      statusText = "Very High Success Probability";
+      statusColor = "#059669";
+      statusDesc = `Near-optimal execution: ~${probPct.toFixed(1)}% chance of measuring the correct state.`;
+    } else if (prob >= 0.85) {
+      statusText = "High Success Probability";
+      statusColor = "#2563eb";
+      statusDesc = `Reliable algorithm execution: ~${probPct.toFixed(1)}% expected correct measurements.`;
+    } else if (prob >= 0.70) {
+      statusText = "Moderate Success Probability";
+      statusColor = "#d97706";
+      statusDesc = `Noise reduces reliability: ~${probPct.toFixed(1)}% chance of correct measurements.`;
+    } else {
+      statusText = "Low Success Probability";
+      statusColor = "#dc2626";
+      statusDesc = `High noise degradation: only ~${probPct.toFixed(1)}% chance of correct measurements.`;
+    }
+
+    if (resStatusBadge) {
+      resStatusBadge.textContent = statusText;
+      resStatusBadge.style.color = statusColor;
+      resStatusBadge.style.borderColor = statusColor;
+      resStatusBadge.style.background = `${statusColor}15`;
+    }
+    if (resStatusDesc) {
+      resStatusDesc.textContent = statusDesc;
+    }
 
 
   }
