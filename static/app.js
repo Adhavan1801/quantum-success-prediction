@@ -278,24 +278,88 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Validation
+  // Circuit Constructibility Validation
   function validateInputs() {
-    let warning = null;
-    if (state.n_qubits < 2 || state.n_qubits > 8) {
-      warning = "Number of qubits is outside tested range (2 – 8).";
-    } else if (state.circuit_depth < 3 || state.circuit_depth > 12) {
-      warning = "Circuit depth is outside tested range (3 – 12).";
-    } else if (state.gate_count_1q < 4 || state.gate_count_1q > 27) {
-      warning = "1-Qubit gate count is outside tested range (4 – 27).";
-    } else if (state.gate_count_2q < 0 || state.gate_count_2q > 11) {
-      warning = "2-Qubit gate count is outside tested range (0 – 11).";
+    const errors = [];
+    const warnings = [];
+
+    const n = state.n_qubits;
+    const depth = state.circuit_depth;
+    const g1 = state.gate_count_1q;
+    const g2 = state.gate_count_2q;
+    const gTotal = g1 + g2;
+    state.total_gate_count = gTotal;
+
+    // Total physical qubits required (DJ/BV: n+1, Simon: 2n)
+    const totalQubits = (state.algorithm === "simons") ? (2 * n) : (n + 1);
+
+    // 1. Qubit bounds
+    if (n < 2) {
+      errors.push("At least 2 qubits required.");
+    } else if (n > 8) {
+      warnings.push(`Qubit count (${n}) exceeds calibrated range (2–8).`);
     }
 
-    if (warning) {
-      metricWarningText.textContent = warning;
+    // 2. Minimal gate requirements to construct algorithm oracles
+    let min1q = 0;
+    let min2q = 0;
+    if (state.algorithm === "deutsch_jozsa" || state.algorithm === "bernstein_vazirani") {
+      min1q = 2 * n + 2; // Ancilla prep (X+H) + input initialization (nH) + measurement interference (nH)
+      min2q = 1;         // Oracle requires at least 1 CNOT gate
+    } else if (state.algorithm === "simons") {
+      min1q = 2 * n;     // Input initialization (nH) + measurement interference (nH)
+      min2q = n;         // Copying input register requires at least n CNOT gates
+    }
+
+    if (g1 < min1q) {
+      errors.push(`Insufficient 1Q gates (${g1}): requires ≥ ${min1q} for state prep & interference.`);
+    }
+    if (g2 < min2q) {
+      errors.push(`Insufficient 2Q gates (${g2}): requires ≥ ${min2q} CNOT gates to construct oracle.`);
+    }
+
+    // 3. Physical circuit depth & scheduling constraints
+    if (depth < 1) {
+      errors.push("Circuit depth must be at least 1.");
+    } else {
+      if (depth > gTotal + 2) {
+        errors.push(`Depth (${depth}) cannot exceed total gates (${gTotal}).`);
+      }
+      const maxCapacity = depth * totalQubits;
+      if (gTotal > maxCapacity) {
+        errors.push(`Cannot pack ${gTotal} gates into depth ${depth} on ${totalQubits} qubits (max is ${maxCapacity}).`);
+      }
+      const max2qPerLayer = Math.max(1, Math.floor(totalQubits / 2));
+      const minDepth2q = Math.ceil(g2 / max2qPerLayer);
+      if (depth < minDepth2q) {
+        errors.push(`Depth too shallow: ${g2} CNOTs on ${totalQubits} qubits need depth ≥ ${minDepth2q}, but depth is ${depth}.`);
+      }
+    }
+
+    // 4. Update UI indicator
+    if (errors.length > 0) {
+      metricWarningText.textContent = "Cannot construct circuit: " + errors[0];
       metricWarning.classList.remove("hidden");
+      metricWarning.classList.add("error-alert");
+      btnPredict.disabled = true;
+      btnPredict.style.opacity = "0.5";
+      btnPredict.style.cursor = "not-allowed";
+      return false;
+    } else if (warnings.length > 0) {
+      metricWarningText.textContent = warnings[0];
+      metricWarning.classList.remove("hidden");
+      metricWarning.classList.remove("error-alert");
+      btnPredict.disabled = false;
+      btnPredict.style.opacity = "1";
+      btnPredict.style.cursor = "pointer";
+      return true;
     } else {
       metricWarning.classList.add("hidden");
+      metricWarning.classList.remove("error-alert");
+      btnPredict.disabled = false;
+      btnPredict.style.opacity = "1";
+      btnPredict.style.cursor = "pointer";
+      return true;
     }
   }
 
@@ -303,6 +367,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // PREDICTION EXECUTION (Triggered ONLY on "Predict" button click)
   // -------------------------------------------------------------
   async function performPredictionCall() {
+    if (!validateInputs()) {
+      showToast("Parameters cannot construct a valid quantum circuit.");
+      return;
+    }
     btnPredict.textContent = "Calculating...";
 
     const payload = {

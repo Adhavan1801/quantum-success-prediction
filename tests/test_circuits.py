@@ -25,6 +25,8 @@ from src.circuits import (
     generate_secret_strings,
     generate_all_circuit_configs,
     get_circuit_stats,
+    validate_circuit_parameters,
+    check_circuit_constructibility,
 )
 
 
@@ -151,6 +153,86 @@ class TestUtilities(unittest.TestCase):
         self.assertGreater(stats["circuit_depth"], 0)
         self.assertGreaterEqual(stats["gate_count_2q"], 0)
         self.assertGreater(stats["total_gate_count"], 0)
+
+
+
+
+class TestCircuitValidation(unittest.TestCase):
+    """Test validation of circuit constructibility and parameter consistency."""
+
+    def test_valid_parameters(self):
+        """Standard calibrated circuits should pass constructibility checks."""
+        res = validate_circuit_parameters(
+            algorithm="deutsch_jozsa",
+            n_qubits=3,
+            circuit_depth=6,
+            gate_count_1q=8,
+            gate_count_2q=3,
+            total_gate_count=11,
+            noise_type="none",
+            noise_strength=0.0,
+        )
+        self.assertTrue(res["is_valid"])
+        self.assertTrue(res["constructible"])
+        self.assertEqual(len(res["errors"]), 0)
+
+    def test_gate_count_mismatch(self):
+        """Mismatch between total and sum of 1Q + 2Q gates should be flagged."""
+        res = validate_circuit_parameters(
+            algorithm="deutsch_jozsa",
+            n_qubits=3,
+            circuit_depth=6,
+            gate_count_1q=8,
+            gate_count_2q=3,
+            total_gate_count=99,
+        )
+        self.assertFalse(res["is_valid"])
+        self.assertTrue(any("inconsistent" in e.lower() for e in res["errors"]))
+
+    def test_impossible_depth_packing(self):
+        """Depth too small to physically accommodate gate count must fail."""
+        res = validate_circuit_parameters(
+            algorithm="deutsch_jozsa",
+            n_qubits=3,
+            circuit_depth=2,
+            gate_count_1q=20,
+            gate_count_2q=5,
+            total_gate_count=25,
+        )
+        self.assertFalse(res["is_valid"])
+        self.assertTrue(any("packing" in e.lower() for e in res["errors"]))
+
+    def test_depth_exceeds_total_gates(self):
+        """Depth cannot exceed the total number of gates in the circuit."""
+        res = validate_circuit_parameters(
+            algorithm="deutsch_jozsa",
+            n_qubits=3,
+            circuit_depth=30,
+            gate_count_1q=8,
+            gate_count_2q=3,
+            total_gate_count=11,
+        )
+        self.assertFalse(res["is_valid"])
+        self.assertTrue(any("exceed total gate count" in e.lower() for e in res["errors"]))
+
+    def test_simon_requires_n_cnots(self):
+        """Simon's algorithm requires at least n CNOTs to construct the 2-to-1 oracle."""
+        res = validate_circuit_parameters(
+            algorithm="simons",
+            n_qubits=4,
+            circuit_depth=6,
+            gate_count_1q=8,
+            gate_count_2q=1,
+            total_gate_count=9,
+        )
+        self.assertFalse(res["is_valid"])
+        self.assertTrue(any("insufficient 2-qubit gates" in e.lower() for e in res["errors"]))
+
+    def test_check_circuit_constructibility_helper(self):
+        """check_circuit_constructibility helper returns (bool, errors)."""
+        can_construct, errors = check_circuit_constructibility("simons", 3, 6, 6, 3)
+        self.assertTrue(can_construct)
+        self.assertEqual(len(errors), 0)
 
 
 if __name__ == "__main__":

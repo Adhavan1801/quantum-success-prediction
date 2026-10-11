@@ -515,3 +515,238 @@ def get_circuit_stats(circuit):
         "gate_count_2q": gate_count_2q,
         "total_gate_count": gate_count_1q + gate_count_2q,
     }
+
+
+# =============================================================
+# CIRCUIT VALIDATION & CONSTRUCTIBILITY
+# =============================================================
+
+def validate_circuit_parameters(
+    algorithm,
+    n_qubits,
+    circuit_depth=None,
+    gate_count_1q=None,
+    gate_count_2q=None,
+    total_gate_count=None,
+    noise_type="none",
+    noise_strength=0.0,
+):
+    """
+    Validate whether the input parameters are physically and logically
+    valid to construct a real quantum circuit for the given algorithm.
+
+    Checks:
+        1. Algorithm support ('deutsch_jozsa', 'bernstein_vazirani', 'simons')
+        2. Qubit count bounds and register sizing (ancilla requirements)
+        3. Gate non-negativity and total gate count consistency (1Q + 2Q = total)
+        4. Minimum gate requirements for algorithm interference & oracle realizability
+        5. Physical scheduling feasibility:
+           - Depth cannot exceed total gates
+           - Total gates cannot exceed Depth * Total Qubits
+           - 2Q gates cannot exceed Depth * floor(Total Qubits / 2)
+        6. Noise channel physical boundaries
+
+    Returns
+    -------
+    dict
+        {
+            'is_valid': bool,
+            'constructible': bool,
+            'errors': list of str,
+            'warnings': list of str,
+            'details': dict
+        }
+    """
+    errors = []
+    warnings = []
+
+    # 1. Algorithm validation
+    valid_algos = ["deutsch_jozsa", "bernstein_vazirani", "simons"]
+    algo = str(algorithm).strip().lower()
+    if algo not in valid_algos:
+        errors.append(f"Invalid algorithm '{algorithm}'. Must be one of: {', '.join(valid_algos)}.")
+        return {
+            "is_valid": False,
+            "constructible": False,
+            "errors": errors,
+            "warnings": warnings,
+            "details": {},
+        }
+
+    # 2. Qubit count validation
+    try:
+        n_qubits = int(n_qubits)
+    except (ValueError, TypeError):
+        errors.append("Number of qubits must be an integer.")
+        return {
+            "is_valid": False,
+            "constructible": False,
+            "errors": errors,
+            "warnings": warnings,
+            "details": {},
+        }
+
+    if n_qubits < 1:
+        errors.append(f"Qubit count must be at least 1, received {n_qubits}.")
+    elif algo == "simons" and n_qubits < 2:
+        errors.append(f"Simon's algorithm requires at least 2 input qubits to construct a non-trivial period, received {n_qubits}.")
+    elif n_qubits < 2 or n_qubits > 8:
+        warnings.append(f"Qubit count ({n_qubits}) is outside tested benchmark range (2–8).")
+
+    # Total physical qubits in circuit
+    # DJ & BV: n input qubits + 1 ancilla qubit = n + 1
+    # Simon's: n input qubits + n output/ancilla qubits = 2 * n
+    total_qubits = (n_qubits + 1) if algo in ["deutsch_jozsa", "bernstein_vazirani"] else (2 * n_qubits)
+
+    # 3. Gate Counts & Depth validation (if provided)
+    if circuit_depth is not None:
+        try:
+            circuit_depth = int(circuit_depth)
+            if circuit_depth < 1:
+                errors.append(f"Circuit depth must be at least 1, received {circuit_depth}.")
+        except (ValueError, TypeError):
+            errors.append("Circuit depth must be an integer.")
+
+    if gate_count_1q is not None:
+        try:
+            gate_count_1q = int(gate_count_1q)
+            if gate_count_1q < 0:
+                errors.append(f"Single-qubit gate count cannot be negative, received {gate_count_1q}.")
+        except (ValueError, TypeError):
+            errors.append("Single-qubit gate count must be an integer.")
+
+    if gate_count_2q is not None:
+        try:
+            gate_count_2q = int(gate_count_2q)
+            if gate_count_2q < 0:
+                errors.append(f"Two-qubit gate count cannot be negative, received {gate_count_2q}.")
+        except (ValueError, TypeError):
+            errors.append("Two-qubit gate count must be an integer.")
+
+    if total_gate_count is not None:
+        try:
+            total_gate_count = int(total_gate_count)
+            if total_gate_count < 0:
+                errors.append(f"Total gate count cannot be negative, received {total_gate_count}.")
+        except (ValueError, TypeError):
+            errors.append("Total gate count must be an integer.")
+
+    # Consistency between gate counts
+    if gate_count_1q is not None and gate_count_2q is not None:
+        computed_total = gate_count_1q + gate_count_2q
+        if total_gate_count is not None and total_gate_count != computed_total:
+            errors.append(
+                f"Total gate count ({total_gate_count}) is inconsistent with 1Q ({gate_count_1q}) + 2Q ({gate_count_2q}) = {computed_total}."
+            )
+        else:
+            total_gate_count = computed_total
+
+    # 4. Constructibility & Minimal Gate Requirements for Oracle/Interference
+    if algo in ["deutsch_jozsa", "bernstein_vazirani"]:
+        # Ancilla initialization (X + H = 2) + input initialization (n H) + measurement interference (n H) = 2n + 2
+        min_1q_required = 2 * n_qubits + 2
+        # Non-trivial oracle requires at least 1 CNOT from input to ancilla
+        min_2q_required = 1
+    elif algo == "simons":
+        # Input superposition (n H) + measurement interference (n H) = 2n
+        min_1q_required = 2 * n_qubits
+        # Copy input register to output register requires n CNOT gates
+        min_2q_required = n_qubits
+    else:
+        min_1q_required = 0
+        min_2q_required = 0
+
+    if gate_count_1q is not None and gate_count_1q < min_1q_required:
+        errors.append(
+            f"Insufficient 1-qubit gates for {algo.replace('_', ' ').title()}: Requires at least {min_1q_required} "
+            f"gates for state initialization & interference, but only {gate_count_1q} specified."
+        )
+
+    if gate_count_2q is not None and gate_count_2q < min_2q_required:
+        errors.append(
+            f"Insufficient 2-qubit gates for {algo.replace('_', ' ').title()}: Requires at least {min_2q_required} "
+            f"CNOT gates to construct the oracle, but only {gate_count_2q} specified."
+        )
+
+    if gate_count_2q is not None and gate_count_2q > 0 and total_qubits < 2:
+        errors.append("Two-qubit gates cannot be constructed on a circuit with fewer than 2 total qubits.")
+
+    # 5. Physical Scheduling & Depth Constraints
+    if circuit_depth is not None and total_gate_count is not None:
+        # Depth cannot exceed total gate count (+2 allowance for barriers / alignment)
+        if circuit_depth > total_gate_count + 2:
+            errors.append(
+                f"Circuit depth ({circuit_depth}) cannot exceed total gate count ({total_gate_count}). "
+                f"A quantum circuit cannot have more depth layers than total gates applied."
+            )
+
+        # In depth D on N qubits, each qubit can execute at most 1 gate per unit depth.
+        max_gates_in_depth = circuit_depth * total_qubits
+        if total_gate_count > max_gates_in_depth:
+            errors.append(
+                f"Impossible circuit packing: Cannot fit {total_gate_count} gates into depth {circuit_depth} on {total_qubits} qubits. "
+                f"Maximum theoretical capacity is {max_gates_in_depth} gates."
+            )
+
+    # 2-Qubit gate parallelism bound:
+    # At most floor(total_qubits / 2) non-overlapping 2-qubit gates can execute in a single depth slice
+    if circuit_depth is not None and gate_count_2q is not None and gate_count_2q > 0:
+        max_parallel_2q_per_layer = max(1, total_qubits // 2)
+        min_depth_for_2q = (gate_count_2q + max_parallel_2q_per_layer - 1) // max_parallel_2q_per_layer
+        if circuit_depth < min_depth_for_2q:
+            errors.append(
+                f"Depth too shallow for 2-qubit gates: {gate_count_2q} CNOT gates on {total_qubits} qubits "
+                f"require a depth of at least {min_depth_for_2q}, but depth is set to {circuit_depth}."
+            )
+
+    # 6. Noise channel physical boundaries
+    valid_noise_types = ["none", "depolarizing", "amplitude_damping", "thermal_relaxation"]
+    noise_t = str(noise_type).strip().lower()
+    if noise_t not in valid_noise_types:
+        errors.append(f"Invalid noise type '{noise_type}'. Must be one of: {', '.join(valid_noise_types)}.")
+    else:
+        try:
+            noise_str = float(noise_strength)
+            if noise_str < 0.0:
+                errors.append(f"Noise strength cannot be negative, received {noise_str}.")
+            elif noise_t == "none" and noise_str != 0.0:
+                warnings.append("Noise strength reset to 0.0 for ideal 'none' noise model.")
+            elif noise_t in ["depolarizing", "amplitude_damping"] and (noise_str > 0.75):
+                errors.append(f"Noise strength ({noise_str}) exceeds physical maximum for quantum channel (0.75).")
+            elif noise_t in ["depolarizing", "amplitude_damping"] and (noise_str < 0.001 or noise_str > 0.10):
+                warnings.append(f"Noise strength ({noise_str}) is outside recommended calibration range (0.001–0.10).")
+            elif noise_t == "thermal_relaxation" and (noise_str < 0.01 or noise_str > 0.10):
+                warnings.append(f"Thermal relaxation strength ({noise_str}) is outside recommended range (0.01–0.10).")
+        except (ValueError, TypeError):
+            errors.append("Noise strength must be a numerical float.")
+
+    is_valid = len(errors) == 0
+    return {
+        "is_valid": is_valid,
+        "constructible": is_valid,
+        "errors": errors,
+        "warnings": warnings,
+        "details": {
+            "algorithm": algo,
+            "n_qubits": n_qubits,
+            "total_qubits_required": total_qubits,
+            "min_1q_gates_required": min_1q_required,
+            "min_2q_gates_required": min_2q_required,
+            "max_gates_for_depth": (circuit_depth * total_qubits) if circuit_depth else None,
+        },
+    }
+
+
+def check_circuit_constructibility(algorithm, n_qubits, circuit_depth=None, gate_count_1q=None, gate_count_2q=None):
+    """
+    Convenience helper returning (is_constructible, error_messages).
+    """
+    res = validate_circuit_parameters(
+        algorithm=algorithm,
+        n_qubits=n_qubits,
+        circuit_depth=circuit_depth,
+        gate_count_1q=gate_count_1q,
+        gate_count_2q=gate_count_2q,
+    )
+    return res["constructible"], res["errors"]
+

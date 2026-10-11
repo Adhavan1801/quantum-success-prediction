@@ -511,6 +511,17 @@ html, body {
   border-color: #cbd5e1;
 }
 
+
+.warning-alert.error-alert {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.warning-alert.error-alert svg {
+  stroke: #dc2626;
+}
+
 .warning-alert {
   display: flex;
   align-items: center;

@@ -24,6 +24,8 @@ from src.circuits import (
     build_bv_circuit,
     build_simon_circuit,
     get_circuit_stats,
+    validate_circuit_parameters,
+    check_circuit_constructibility,
 )
 from src.noise_models import (
     get_depolarizing_model,
@@ -252,6 +254,45 @@ def get_circuit_estimate():
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
+@app.route("/api/validate_circuit", methods=["GET", "POST"])
+def validate_circuit():
+    """
+    Validate whether the input parameters are physically and logically
+    valid to construct a real quantum circuit.
+    """
+    if request.method == "POST":
+        try:
+            data = request.get_json(force=True)
+        except Exception:
+            return jsonify({"status": "error", "message": "Invalid JSON body"}), 400
+    else:
+        data = request.args.to_dict()
+
+    algo = data.get("algorithm", "deutsch_jozsa")
+    n_qubits = data.get("n_qubits", 3)
+    depth = data.get("circuit_depth")
+    g1 = data.get("gate_count_1q")
+    g2 = data.get("gate_count_2q")
+    g_total = data.get("total_gate_count")
+    noise_t = data.get("noise_type", "none")
+    noise_str = data.get("noise_strength", 0.0)
+
+    res = validate_circuit_parameters(
+        algorithm=algo,
+        n_qubits=n_qubits,
+        circuit_depth=depth,
+        gate_count_1q=g1,
+        gate_count_2q=g2,
+        total_gate_count=g_total,
+        noise_type=noise_t,
+        noise_strength=noise_str,
+    )
+    return jsonify({
+        "status": "success",
+        "validation": res,
+    })
+
+
 @app.route("/api/predict", methods=["POST"])
 def predict():
     """
@@ -272,21 +313,29 @@ def predict():
     noise_type = data.get("noise_type", "none")
     noise_strength = float(data.get("noise_strength", 0.0))
 
-    # Boundary & consistency validation warnings
-    warnings = []
-    if n_qubits < 2 or n_qubits > 8:
-        warnings.append(f"Qubit count ({n_qubits}) is outside tested bounds (2-8).")
-    if circuit_depth < 3 or circuit_depth > 12:
-        warnings.append(f"Circuit depth ({circuit_depth}) is outside tested bounds (3-12).")
-    if total_gate_count != gate_count_1q + gate_count_2q:
-        warnings.append(f"Total gate count ({total_gate_count}) differs from sum of 1Q + 2Q gates ({gate_count_1q + gate_count_2q}).")
-    if noise_type == "none" and noise_strength != 0.0:
-        noise_strength = 0.0
-        warnings.append("Noise strength reset to 0.0 for ideal 'none' noise model.")
-    elif noise_type in VALID_RANGES["noise_strengths"]:
-        n_cfg = VALID_RANGES["noise_strengths"][noise_type]
-        if noise_strength < n_cfg["min"] or noise_strength > n_cfg["max"]:
-            warnings.append(f"Noise strength ({noise_strength}) is outside recommended {noise_type} range ({n_cfg['min']} - {n_cfg['max']}).")
+    # Validate whether parameters are valid to construct a real quantum circuit
+    validation = validate_circuit_parameters(
+        algorithm=algorithm,
+        n_qubits=n_qubits,
+        circuit_depth=circuit_depth,
+        gate_count_1q=gate_count_1q,
+        gate_count_2q=gate_count_2q,
+        total_gate_count=total_gate_count,
+        noise_type=noise_type,
+        noise_strength=noise_strength,
+    )
+
+    if not validation["is_valid"]:
+        return jsonify({
+            "status": "error",
+            "error_type": "circuit_validation_failed",
+            "message": "Parameters cannot construct a valid quantum circuit: " + "; ".join(validation["errors"]),
+            "validation_errors": validation["errors"],
+            "warnings": validation["warnings"],
+            "details": validation["details"],
+        }), 400
+
+    warnings = list(validation["warnings"])
 
     # Build input feature matrix
     params = {
