@@ -52,3 +52,7 @@ _backup/
 
 #--- documents ---
 *.docx
+
+# --- Conference Report & Local Agents ---
+Report/
+.agents/
